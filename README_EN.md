@@ -6,7 +6,7 @@ This is a Python-based Rotaeno screen recording stabilization script. Its princi
 
 ## Features
 
-- No need to install Adobe After Effects; rendering can be done with just one click.
+- No need to install Adobe After Effects; rendering can be done with just one command.
 - Supports batch processing of videos.
 
 ## Installation

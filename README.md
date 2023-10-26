@@ -6,7 +6,7 @@
 
 ## 功能特点
 
-- 无需安装Adobe After Effects，一键即可渲染完成
+- 无需安装Adobe After Effects，一行命令即可渲染完成
 - 支持批量处理视频
 
 ## 安装
