@@ -2,6 +2,8 @@
 
 *阅读 [中文版](README.md).*
 
+![Python Rotaeno Stabilizer](stable.png)
+
 This is a Python-based Rotaeno screen recording stabilization script. Its principle is the same as the script provided by Rotaeno for Adobe After Effects, which rotates frames based on the colors of the four corners of the screen recording in live broadcast mode. The goal is to stabilize the video image.
 
 ## Features
@@ -24,7 +26,6 @@ cd python_rotaeno_stabilizer
 pip install -r requirements.txt
 ```
 
-Sure! Here's a translation:
 
 ## How to Use
 
