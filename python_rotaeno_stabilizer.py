@@ -56,8 +56,6 @@ def render(video):
     video_dir = os.path.join(os.getcwd(), 'videos', video)
     video_file_name = os.path.basename(video)  # 获取不带路径的文件名
     video_name = os.path.splitext(video_file_name)[0]
-    print(video_name)
-    print(video_file_name)
     cap = cv2.VideoCapture(video_dir)
     # fps = round(cap.get(cv2.CAP_PROP_FPS), 2)
     fps = cap.get(cv2.CAP_PROP_FPS)
