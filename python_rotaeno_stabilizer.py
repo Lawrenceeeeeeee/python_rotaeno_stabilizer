@@ -21,11 +21,11 @@ def add_audio_to_video(video_file, audio_source, output_file):
 
 
 def find_mp4_videos():
-    current_directory = os.getcwd()
+    dir = os.path.join(os.getcwd(), 'videos')  # 指向videos目录
     videos = []
-    for file_path in glob.glob(os.path.join(current_directory, '*.mp4')):
+    for file_path in glob.glob(os.path.join(dir, '*.mp4')):
         if os.path.isfile(file_path):
-            relative_path = os.path.relpath(file_path, current_directory)
+            relative_path = os.path.relpath(file_path, dir)
             videos.append(relative_path)
     return videos
 
@@ -53,13 +53,19 @@ def compute_rotation(left_color, right_color, center_color, sample_color):
 # print(mp4_videos)
 # quit()
 def render(video):
-    video_name = os.path.splitext(video)[0]
-    cap = cv2.VideoCapture(video)
+    video_dir = os.path.join(os.getcwd(), 'videos', video)
+    video_file_name = os.path.basename(video)  # 获取不带路径的文件名
+    video_name = os.path.splitext(video_file_name)[0]
+    print(video_name)
+    print(video_file_name)
+    cap = cv2.VideoCapture(video_dir)
     # fps = round(cap.get(cv2.CAP_PROP_FPS), 2)
     fps = cap.get(cv2.CAP_PROP_FPS)
     print("fps:", fps)
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(f'{video_name}_stb.mp4', fourcc, fps, (int(cap.get(3)), int(cap.get(4))))
+
+    output_path = os.path.join(os.getcwd(), 'output', f'{video_name}_stb.mp4')  # 指定输出路径
+    out = cv2.VideoWriter(output_path, fourcc, fps, (int(cap.get(3)), int(cap.get(4))))
 
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
@@ -92,5 +98,5 @@ def render(video):
     out.release()
     cv2.destroyAllWindows()
 
-    # 用这个方法添加音频，但是目前视频时长不匹配，会导致音画不同步
+    # 用这个方法添加音频，但是目前视频时长不匹配，会导致音画不同步(需要安装ffmpeg)
     # add_audio_to_video(f'{video_name}_stb.mp4', video, f'{video_name}_with_audio.mp4')
