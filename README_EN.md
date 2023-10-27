@@ -26,6 +26,9 @@ cd python_rotaeno_stabilizer
 pip install -r requirements.txt
 ```
 
+3. Install FFmpeg
+Please download the appropriate installation package from the [FFmpeg official website](https://ffmpeg.org/download.html).
+
 
 ## How to Use
 

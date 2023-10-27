@@ -26,6 +26,9 @@ cd python_rotaeno_stabilizer
 pip install -r requirements.txt
 ```
 
+3. 安装FFmpeg
+请在[FFmpeg官网](https://ffmpeg.org/download.html)上下载对应的安装包
+
 ## 使用方法
 
 0. **注意！！！** 录屏前请在Rotaeno的设置中开启"直播模式"，开启后屏幕的四个角将会出现记录设备旋转角的色块。
