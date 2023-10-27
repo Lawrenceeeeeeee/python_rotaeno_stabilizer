@@ -21,6 +21,10 @@ def add_audio_to_video(video_file, audio_source, output_file):
 
 
 def find_mp4_videos():
+    '''
+    寻找videos目录下的全部mp4文件
+    :return: 视频列表
+    '''
     dir = os.path.join(os.getcwd(), 'videos')  # 指向videos目录
     videos = []
     for file_path in glob.glob(os.path.join(dir, '*.mp4')):
@@ -30,7 +34,40 @@ def find_mp4_videos():
     return videos
 
 
+def convert_vfr_to_cfr(input_path, output_path, target_framerate=59.97):
+    """
+    Convert a VFR video to CFR.
+
+    :param input_path: Path to the input VFR video.
+    :param output_path: Path to save the output CFR video.
+    :param target_framerate: Target framerate for the CFR video (default is 59.97fps).
+    :return: None
+    """
+
+    cmd = [
+        'ffmpeg',
+        '-i', input_path,
+        '-vf', f'fps={target_framerate}',
+        '-c:a', 'copy',  # Copy audio stream without re-encoding
+        output_path
+    ]
+
+    subprocess.run(cmd)
+
+
+# Example usage
+# convert_vfr_to_cfr("path_to_input_video.mp4", "path_to_output_video.mp4", "59.97")
+
+
 def compute_rotation(left_color, right_color, center_color, sample_color):
+    '''
+    根据画面四个角的颜色来计算画面旋转角度
+    :param left_color:
+    :param right_color:
+    :param center_color:
+    :param sample_color:
+    :return: 旋转角度
+    '''
     OffsetDegree = 180.0
 
     centerDist = np.linalg.norm(np.array(center_color) - np.array(sample_color))
@@ -53,23 +90,36 @@ def compute_rotation(left_color, right_color, center_color, sample_color):
 # print(mp4_videos)
 # quit()
 def render(video):
+    '''
+
+    :param video: 视频文件名
+    :return: 无返回值，在output文件夹输出渲染完毕的视频
+    '''
     video_dir = os.path.join(os.getcwd(), 'videos', video)
     video_file_name = os.path.basename(video)  # 获取不带路径的文件名
     video_name = os.path.splitext(video_file_name)[0]
+
     cap = cv2.VideoCapture(video_dir)
     # fps = round(cap.get(cv2.CAP_PROP_FPS), 2)
     fps = cap.get(cv2.CAP_PROP_FPS)
     print("fps:", fps)
+
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 
     output_path = os.path.join(os.getcwd(), 'output', f'{video_name}_stb.mp4')  # 指定输出路径
+    cfr_output_path = os.path.join(os.getcwd(), 'videos', f'{video_name}_cfr.mp4')  # 指定输出路径
+
+    print("正在将视频转换为CFR视频……")
+    convert_vfr_to_cfr(video_dir, cfr_output_path, fps)
+    cap2 = cv2.VideoCapture(cfr_output_path)
+
     out = cv2.VideoWriter(output_path, fourcc, fps, (int(cap.get(3)), int(cap.get(4))))
 
-    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    frame_count = int(cap2.get(cv2.CAP_PROP_FRAME_COUNT))
 
     # 使用tqdm展示进度
     for _ in tqdm(range(frame_count), desc="Processing video"):
-        ret, frame = cap.read()
+        ret, frame = cap2.read()
         if ret:
             height, width, channels = frame.shape
 
