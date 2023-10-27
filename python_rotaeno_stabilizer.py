@@ -55,8 +55,22 @@ def convert_vfr_to_cfr(input_path, output_path, target_framerate=59.97):
     subprocess.run(cmd)
 
 
-# Example usage
-# convert_vfr_to_cfr("path_to_input_video.mp4", "path_to_output_video.mp4", "59.97")
+def get_video_duration(video_path):
+    '''
+
+    :param video_path: 视频路径
+    :return: 时长
+    '''
+    cmd = [
+        'ffprobe',
+        '-v', 'error',
+        '-show_entries', 'format=duration',
+        '-of', 'default=noprint_wrappers=1:nokey=1',
+        video_path
+    ]
+
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    return float(result.stdout)
 
 
 def compute_rotation(left_color, right_color, center_color, sample_color):
@@ -147,4 +161,9 @@ def render(video):
     cv2.destroyAllWindows()
 
     # 用这个方法添加音频，但是目前视频时长不匹配，会导致音画不同步(需要安装ffmpeg)
-    # add_audio_to_video(f'{video_name}_stb.mp4', video, f'{video_name}_with_audio.mp4')
+    add_audio_to_video(output_path, video_dir, f'output/{video_name}_with_audio.mp4')
+
+# duration = get_video_duration('output/lagged_train_stb.mp4')
+# print(duration)
+# duration2 = get_video_duration('videos/lagged_train.mp4')
+# print(duration2)
