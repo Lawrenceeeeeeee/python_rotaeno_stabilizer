@@ -34,7 +34,7 @@ Please download the appropriate installation package from the [FFmpeg official w
 
 0. **Attention!** Before recording, ensure the "Streaming Mode" is activated in Rotaeno settings. Once enabled, the four corners of the screen will display color blocks, which indicate the device's rotation angle.
 
-1. Place the videos you wish to process inside the `videos` directory.
+1. Place the video to be processed in the videos directory (currently only supports mp4).
 
 2. Start the project:
 ```shell
@@ -43,5 +43,3 @@ python main.py
 
 3. Once processing is complete, find the rendered videos in the `output` folder.
 
-## Known Issues
-- Even though the rendered video has the same frame count and frame rate as the original video, there is still a difference in video duration. Currently, this issue remains unresolved. As a result, videos produced by this project temporarily do not have audio and can only be stretched and synced in editing software. If you have a solution, feel free to fork this project and submit your changes.
