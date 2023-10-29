@@ -36,11 +36,11 @@ def find_mp4_videos():
 
 def convert_vfr_to_cfr(input_path, output_path, target_framerate=59.97):
     """
-    Convert a VFR video to CFR.
+    VFR转CFR
 
-    :param input_path: Path to the input VFR video.
-    :param output_path: Path to save the output CFR video.
-    :param target_framerate: Target framerate for the CFR video (default is 59.97fps).
+    :param input_path: 视频路径.
+    :param output_path: 输出路径.
+    :param target_framerate: 目标帧率，默认59.97fps.
     :return: None
     """
 
@@ -99,10 +99,6 @@ def compute_rotation(left_color, right_color, center_color, sample_color):
     return -angle
 
 
-# 识别目录中的视频
-# mp4_videos = find_mp4_videos()
-# print(mp4_videos)
-# quit()
 def render(video):
     '''
 
@@ -162,8 +158,3 @@ def render(video):
 
     # 用这个方法添加音频，但是目前视频时长不匹配，会导致音画不同步(需要安装ffmpeg)
     add_audio_to_video(output_path, video_dir, f'output/{video_name}_with_audio.mp4')
-
-# duration = get_video_duration('output/lagged_train_stb.mp4')
-# print(duration)
-# duration2 = get_video_duration('videos/lagged_train.mp4')
-# print(duration2)
