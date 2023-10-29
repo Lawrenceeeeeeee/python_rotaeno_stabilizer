@@ -5,6 +5,7 @@
 ![Python Rotaeno Stabilizer](images/stable.png)
 
 [视频演示](https://www.bilibili.com/video/BV1bc411f7fK/?share_source=copy_web&vd_source=9e94008dbf76e399a164028430118348)
+
 这是一个基于Python的Rotaeno录屏稳定脚本，原理和Rotaeno官方提供的Adobe After Effects脚本一样，是基于直播模式下录屏画面四个角的颜色来旋转帧，从而达到稳定视频画面的目的。
 
 ## 功能特点
