@@ -195,3 +195,83 @@ def render(video,type="v2"):
 
     # 用这个方法添加音频，但是目前视频时长不匹配，会导致音画不同步(需要安装ffmpeg)
     add_audio_to_video(output_path, video_dir, f'output/{video_name}_with_audio.mp4')
+
+def render_square(video,type="v2", square=True): # 渲染方形视频
+    '''
+
+    :param video: 视频文件名
+    :param type: 视频类型，填v1/v2，默认为v2
+    :return: 无返回值，在output文件夹输出渲染完毕的视频
+    '''
+    if os.path.isabs(video):
+        video_dir = video
+    else:
+        video_dir = os.path.join(os.getcwd(), 'videos', video)
+
+    video_file_name = os.path.basename(video)  # 获取不带路径的文件名
+    video_name = os.path.splitext(video_file_name)[0]
+    if square:
+        video_name = video_name + '_square'
+
+    cap = cv2.VideoCapture(video_dir)
+    # fps = round(cap.get(cv2.CAP_PROP_FPS), 2)
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    print("fps:", fps)
+
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+
+    output_path = os.path.join(os.getcwd(), 'output', f'{video_name}_stb.mp4')  # 指定输出路径
+    cfr_output_path = os.path.join(os.getcwd(), 'videos', f'{video_name}_cfr.mp4')  # 指定输出路径
+
+    print("正在将视频转换为CFR视频……")
+    convert_vfr_to_cfr(video_dir, cfr_output_path, fps)
+    cap2 = cv2.VideoCapture(cfr_output_path)
+
+    if square: # 方形
+        out = cv2.VideoWriter(output_path, fourcc, fps, (max(int(cap.get(3)), int(cap.get(4))), max(int(cap.get(3)), int(cap.get(4)))))
+    else:
+        out = cv2.VideoWriter(output_path, fourcc, fps, (int(cap.get(3)), int(cap.get(4))))
+
+    frame_count = int(cap2.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    # 使用tqdm展示进度
+    for _ in tqdm(range(frame_count), desc="Processing video"):
+        ret, frame = cap2.read()
+        if ret:
+            height, width, channels = frame.shape
+
+            # Sample colors
+            O = 5
+            S = 3
+            bottom_left = frame[height - O:height - O + S, O:O + S].mean(axis=(0, 1))
+            top_left = frame[O:O + S, O:O + S].mean(axis=(0, 1))
+            bottom_right = frame[height - O:height - O + S, width - O:width - O + S].mean(axis=(0, 1))
+            top_right = frame[O:O + S, width - O:width - O + S].mean(axis=(0, 1))
+
+            if type == 'v2':
+                angle = compute_rotation_v2(top_left, top_right, bottom_left, bottom_right)
+            else:
+                angle = compute_rotation(top_left, bottom_right, top_right, bottom_left)
+            # print(angle)
+            # Rotate frame
+            if square: # 方形渲染
+                max_size = max(height, width)
+                expanded_frame = np.zeros((max_size, max_size, 3), dtype='uint8')
+                expanded_frame[(max_size - height)//2:(max_size - height)//2 + height, (max_size - width)//2:(max_size - width)//2 + width] = frame
+                M = cv2.getRotationMatrix2D((max_size / 2, max_size / 2), angle, 1)
+                rotated_frame = cv2.warpAffine(expanded_frame, M, (max_size, max_size))
+            else:
+                M = cv2.getRotationMatrix2D((width / 2, height / 2), angle, 1)
+                rotated_frame = cv2.warpAffine(frame, M, (width, height))
+
+            out.write(rotated_frame)
+            # time.sleep(1 / fps)
+        else:
+            print("Error reading frame")
+
+    cap.release()
+    out.release()
+    cv2.destroyAllWindows()
+
+    # 用这个方法添加音频，但是目前视频时长不匹配，会导致音画不同步(需要安装ffmpeg)
+    add_audio_to_video(output_path, video_dir, f'output/{video_name}_with_audio.mp4')
