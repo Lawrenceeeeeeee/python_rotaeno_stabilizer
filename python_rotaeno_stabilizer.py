@@ -98,11 +98,45 @@ def compute_rotation(left_color, right_color, center_color, sample_color):
     # 注意，如果旋转方向是相反的，只需返回-angle即可
     return -angle
 
+def compute_rotation_v2(top_left_color, top_right_color, bottom_left_color, bottom_right_color):
+    '''
+    根据画面四个角的颜色来计算画面旋转角度
+    :param top_left_color: 左上角的颜色 (RGB)
+    :param top_right_color: 右上角的颜色 (RGB)
+    :param bottom_left_color: 左下角的颜色 (RGB)
+    :param bottom_right_color: 右下角的颜色 (RGB)
+    :return: 旋转角度
+    '''
+    # 将RGB值转换为0或1
+    def convert_color_to_binary(color):
+        array = [1 if c >= 255/2 else 0 for c in color]
+        return array[::-1]
 
-def render(video):
+    # 将四个角的颜色转换为二进制
+    binary_top_left = convert_color_to_binary(top_left_color)
+    binary_top_right = convert_color_to_binary(top_right_color)
+    binary_bottom_left = convert_color_to_binary(bottom_left_color)
+    binary_bottom_right = convert_color_to_binary(bottom_right_color)
+    # print("binary_top_left:", binary_top_left)
+    # print("binary_top_right:", binary_top_right)
+    # print("binary_bottom_left:", binary_bottom_left)
+    # print("binary_bottom_right:", binary_bottom_right)
+
+    # 将二进制颜色值转换为角度
+    color_to_degree = (binary_top_left[0] * 2048 + binary_top_left[1] * 1024 + binary_top_left[2] * 512 +
+                      binary_top_right[0] * 256 + binary_top_right[1] * 128 + binary_top_right[2] * 64 +
+                      binary_bottom_left[0] * 32 + binary_bottom_left[1] * 16 + binary_bottom_left[2] * 8 +
+                      binary_bottom_right[0] * 4 + binary_bottom_right[1] * 2 + binary_bottom_right[2])
+    rotation_degree = color_to_degree / 4096 * -360
+
+    return -rotation_degree
+
+
+def render(video,type="v2"):
     '''
 
     :param video: 视频文件名
+    :param type: 视频类型，填v1/v2，默认为v2
     :return: 无返回值，在output文件夹输出渲染完毕的视频
     '''
     video_dir = os.path.join(os.getcwd(), 'videos', video)
@@ -136,13 +170,16 @@ def render(video):
             # Sample colors
             O = 5
             S = 3
-            sampleColor = frame[height - O:height - O + S, O:O + S].mean(axis=(0, 1))
-            leftColor = frame[O:O + S, O:O + S].mean(axis=(0, 1))
-            rightColor = frame[height - O:height - O + S, width - O:width - O + S].mean(axis=(0, 1))
-            centerColor = frame[O:O + S, width - O:width - O + S].mean(axis=(0, 1))
+            bottom_left = frame[height - O:height - O + S, O:O + S].mean(axis=(0, 1))
+            top_left = frame[O:O + S, O:O + S].mean(axis=(0, 1))
+            bottom_right = frame[height - O:height - O + S, width - O:width - O + S].mean(axis=(0, 1))
+            top_right = frame[O:O + S, width - O:width - O + S].mean(axis=(0, 1))
 
-            angle = compute_rotation(leftColor, rightColor, centerColor, sampleColor)
-
+            if type == 'v2':
+                angle = compute_rotation_v2(top_left, top_right, bottom_left, bottom_right)
+            else:
+                angle = compute_rotation(top_left, bottom_right, top_right, bottom_left)
+            # print(angle)
             # Rotate frame
             M = cv2.getRotationMatrix2D((width / 2, height / 2), angle, 1)
             rotated_frame = cv2.warpAffine(frame, M, (width, height))
