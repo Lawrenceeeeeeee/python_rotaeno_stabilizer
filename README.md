@@ -9,6 +9,11 @@
 这是一个基于Python的Rotaeno录屏稳定脚本，原理和Rotaeno官方提供的Adobe After Effects脚本一样，是基于直播模式下录屏画面四个角的颜色来旋转帧，从而达到稳定视频画面的目的。
 
 # 更新记录
+
+## v1.1
+- 增加正方形渲染功能（感谢[@Ki-wimon](https://github.com/Ki-wimon)的PR），脚本默认采用正方形渲染，以最大程度减少画面裁切
+- 为`convert_vfr_to_cfr`和`add_audio_to_video`函数增加了verbose=False形参，减少命令行输出的冗余
+- 删除中间文件，仅保留最后输出
 ## v1.0
 - 增加了V2矫正方法，脚本默认按照V2来稳定视频，如果有V1矫正的需要，请在视频文件名前面添加"v1"字样，脚本将自动切换到V1矫正模式进行稳定，例如：`v1-sample.mp4`。
 
