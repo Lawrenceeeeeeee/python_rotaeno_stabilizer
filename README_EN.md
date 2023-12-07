@@ -9,6 +9,8 @@ Check out the [video demonstration](https://www.bilibili.com/video/BV1bc411f7fK/
 This is a Python-based Rotaeno screen recording stabilization script. Its principle is the same as the script provided by Rotaeno for Adobe After Effects, which rotates frames based on the colors of the four corners of the screen recording in live broadcast mode. The goal is to stabilize the video image.
 
 # Update Log
+## v1.2
+- Added multi-process optimization.
 ## v1.1
 - Added square rendering feature (thanks to the PR by [@Ki-wimon](https://github.com/Ki-wimon)). The script now defaults to square rendering to minimize cropping of the frame.
 - Added a `verbose=False` parameter to the `convert_vfr_to_cfr` and `add_audio_to_video` functions to reduce redundant command line output.

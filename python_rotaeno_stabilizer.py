@@ -6,7 +6,8 @@ import os
 import subprocess
 import time
 import math
-from concurrent.futures import ThreadPoolExecutor, as_completed
+# from concurrent.futures import ThreadPoolExecutor, as_completed
+import multiprocessing as mp
 from tqdm import tqdm
 import queue
 
@@ -245,8 +246,52 @@ def render(video,type="v2", square=True): # 渲染方形视频
     add_audio_to_video(output_path, video_dir, f'output/{video_name}_with_audio.mp4')
     os.remove(cfr_output_path)
     os.remove(output_path)
-    print(f"{video_file_name}稳定完成")
+    # print(f"{video_file_name}稳定完成")
 
+def process_video(group_number, video_path, frame_jump_unit, type="v2", square=True):
+    cap = cv2.VideoCapture(video_path)
+    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_jump_unit * group_number)
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    proc_frames = 0
+    inter_output_path = os.path.join(os.getcwd(), 'output', "{}.{}".format(group_number, 'mp4'))
+
+    frame_size = math.ceil(math.sqrt(int(cap.get(3)) ** 2 + int(cap.get(4)) ** 2))
+    if square: # 方形
+        out = cv2.VideoWriter(inter_output_path, fourcc, fps, (frame_size, frame_size))
+    else:
+        out = cv2.VideoWriter(inter_output_path, fourcc, fps, (int(cap.get(3)), int(cap.get(4))))
+
+    while proc_frames < frame_jump_unit:
+        ret, frame = cap.read()
+        if ret:
+            out.write(process_frame(frame, type=type, square=square))
+        else:
+            print("Error reading frame")
+        proc_frames += 1
+
+    cap.release()
+    out.release()
+    return None
+
+def concatenate_videos(output_file, verbose=False):
+    # 构建 FFmpeg 命令
+    cmd = [
+        'ffmpeg',
+        '-f', 'concat',
+        '-safe', '0',  # 如果文件名包含特殊字符，需要此选项
+        '-i', 'output/intermediate_files.txt',
+        '-c', 'copy',  # 使用 'copy' 来避免重新编码
+        output_file
+    ]
+
+    # 执行命令
+    if not verbose:
+        # 抑制 stdout 和 stderr 输出
+        with open(os.devnull, 'wb') as devnull:
+            subprocess.run(cmd, stdout=devnull, stderr=devnull)
+    else:
+        subprocess.run(cmd)
 def multi_render(video,type="v2", square=True): # 渲染方形视频
     '''
 
@@ -273,38 +318,37 @@ def multi_render(video,type="v2", square=True): # 渲染方形视频
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 
     output_path = os.path.join(os.getcwd(), 'output', f'{video_name}_stb.mp4')  # 指定输出路径
-    cfr_output_path = os.path.join(os.getcwd(), 'videos', f'{video_name}_cfr.mp4')  # 指定输出路径
+    cfr_output_path = os.path.join(os.getcwd(), 'output', f'{video_name}_cfr.mp4')  # 指定输出路径
 
     print("正在将视频转换为CFR视频……")
     convert_vfr_to_cfr(video_dir, cfr_output_path, fps)
-    cap2 = cv2.VideoCapture(cfr_output_path)
-
-    frame_size = math.ceil(math.sqrt(int(cap.get(3)) ** 2 + int(cap.get(4)) ** 2))
-
-    if square: # 方形
-        out = cv2.VideoWriter(output_path, fourcc, fps, (frame_size, frame_size))
-    else:
-        out = cv2.VideoWriter(output_path, fourcc, fps, (int(cap.get(3)), int(cap.get(4))))
-
-    frame_count = int(cap2.get(cv2.CAP_PROP_FRAME_COUNT))
-
-    processed_queue = queue.PriorityQueue()
-
-    with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
-        for i in range(frame_count):
-            ret, frame = cap.read()
-            if ret:
-                executor.submit(process_frame, (i, frame), processed_queue,type, square)
-
-    for _ in tqdm(range(frame_count), desc="Writing video"):
-        frame_index, processed_frame = processed_queue.get()
-        out.write(processed_frame)
-
     cap.release()
-    out.release()
-    cv2.destroyAllWindows()
 
+    # 接下来只处理CFR视频
+
+    cap2 = cv2.VideoCapture(cfr_output_path)
+    frame_jump_unit = cap2.get(cv2.CAP_PROP_FRAME_COUNT) // num_cores # 每个进程处理的帧数
+
+    p = mp.Pool(num_cores)
+    l = range(num_cores)
+    l = [(item, cfr_output_path, frame_jump_unit, type, square) for item in l]
+    p.starmap(process_video, l)
+
+    intermediate_files = ["{}.{}".format(i, 'mp4') for i in range(num_cores)]
+    # print(intermediate_files)
+
+    with open("output/intermediate_files.txt", "w") as f:
+        for t in intermediate_files:
+            f.write("file {} \n".format(t))
+
+    concatenate_videos(output_path)
+    print("合并完毕")
     add_audio_to_video(output_path, video_dir, f'output/{video_name}_with_audio.mp4')
+    print("音频合成完毕")
     os.remove(cfr_output_path)
     os.remove(output_path)
+
+    for f in intermediate_files:
+        os.remove(os.path.join(os.getcwd(), 'output', f))
+    os.remove("output/intermediate_files.txt")
     print(f"{video_file_name}稳定完成")

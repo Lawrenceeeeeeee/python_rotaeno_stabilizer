@@ -10,6 +10,8 @@
 
 # 更新记录
 
+## v1.2 
+- 增加多进程优化
 ## v1.1
 - 增加正方形渲染功能（感谢[@Ki-wimon](https://github.com/Ki-wimon)的PR），脚本默认采用正方形渲染，以最大程度减少画面裁切
 - 为`convert_vfr_to_cfr`和`add_audio_to_video`函数增加了verbose=False形参，减少命令行输出的冗余
