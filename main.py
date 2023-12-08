@@ -1,6 +1,6 @@
-from python_rotaeno_stabilizer import *
 import time
 
+from python_rotaeno_stabilizer import *
 
 if __name__ == '__main__':
     videos = find_mp4_videos()
