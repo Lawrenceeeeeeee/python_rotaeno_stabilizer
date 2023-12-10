@@ -43,7 +43,6 @@ class RotaenoStabilizer:
 
         self.num_cores = os.cpu_count()
 
-    @staticmethod
     @timer
     def add_audio_to_video(self, verbose=False):
         """
