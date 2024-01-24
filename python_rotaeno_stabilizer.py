@@ -26,6 +26,15 @@ def timer(fn):
 
 
 class RotaenoStabilizer:
+    format_to_fourcc = {
+        '.mp4': 'mp4v',
+        '.mov': 'avc1',
+        '.avi': 'XVID',  # 或 'DIVX'
+        '.mkv': 'H264',
+        '.wmv': 'WMV1',
+        '.flv': 'FLV1'
+    }
+
     def __init__(self, video, type="v2", square=True):
         self.video_file = video
         self.type = type
@@ -34,11 +43,18 @@ class RotaenoStabilizer:
         self.video_file_name = os.path.basename(video)  # 获取不带路径的文件名
         self.video_name = os.path.splitext(self.video_file_name)[0]  # 获取文件名
         self.video_extension = os.path.splitext(self.video_file_name)[1]  # 获取文件后缀
-        self.output_path = os.path.join(os.getcwd(), 'output', f'{self.video_name}_stb.mp4')  # 指定输出路径
-        self.cfr_output_path = os.path.join(os.getcwd(), 'output', f'{self.video_name}_cfr.mp4')  # 指定输出路径
+        self.output_path = os.path.join(os.getcwd(), 'output',
+                                        f'{self.video_name}_stb{self.video_extension}')  # 指定输出路径
+        self.cfr_output_path = os.path.join(os.getcwd(), 'output',
+                                            f'{self.video_name}_cfr{self.video_extension}')  # 指定输出路径
         cap = cv2.VideoCapture(self.video_dir)
         self.fps = cap.get(cv2.CAP_PROP_FPS)
-        self.fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+
+        if self.video_extension.lower() in self.format_to_fourcc:
+            self.fourcc = cv2.VideoWriter_fourcc(*self.format_to_fourcc[self.video_extension.lower()])
+        else:
+            raise ValueError(f"Unsupported video format: {self.video_extension}")
+        # self.fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         cap.release()
 
         self.num_cores = os.cpu_count()
@@ -54,7 +70,7 @@ class RotaenoStabilizer:
         :param verbose: 是否显示详细的 ffmpeg 输出，默认为 False。
         :return: None
         """
-        output_file = f'output/{self.video_name}_with_audio.mp4'
+        output_file = f'output/{self.video_name}_with_audio{self.video_extension.lower()}'
         command = [
             'ffmpeg',
             '-i', self.output_path,  # 输入的视频文件
@@ -186,13 +202,43 @@ class RotaenoStabilizer:
         # Rotate frame
         max_size = math.ceil(math.sqrt(width ** 2 + height ** 2))
         if self.square:  # 方形渲染
+            """
+            设手机尺寸为a*b, 长a, 宽b
+            判定环内径: (1050**2+888**2)**0.5
+                l = 1.1824324324 * b
+                ((1.1824324324**2+1)**0.5 * height + 7)
+            判定环宽度: 14
+            """
             # max_size = max(height, width)
+            background_frame = np.zeros((max_size, max_size, 3), dtype='uint8')
 
+            # 在背景上绘制圆环
+            circle_center = (max_size // 2, max_size // 2)
+            circle_radius = ((1.1824324324 ** 2 + 1) ** 0.5 * height + 7) // 2
+            circle_thickness = 15  # 圆环的宽度，比如15px
+            cv2.circle(background_frame, circle_center, math.ceil(circle_radius), (255, 255, 255), thickness=circle_thickness)
+
+            # 将原始视频帧放置在中间
             expanded_frame = np.zeros((max_size, max_size, 3), dtype='uint8')
-            expanded_frame[(max_size - height) // 2:(max_size - height) // 2 + height,
-            (max_size - width) // 2:(max_size - width) // 2 + width] = frame
-            M = cv2.getRotationMatrix2D((max_size / 2, max_size / 2), angle, 1)
+            x_offset = (max_size - width) // 2
+            y_offset = (max_size - height) // 2
+            expanded_frame[y_offset:y_offset + height, x_offset:x_offset + width] = frame
+
+            # 对扩展帧进行旋转
+            M = cv2.getRotationMatrix2D((max_size // 2, max_size // 2), angle, 1)
             rotated_frame = cv2.warpAffine(expanded_frame, M, (max_size, max_size))
+
+            mask = cv2.inRange(rotated_frame, (1, 1, 1), (255, 255, 255))
+
+            # 使用模糊和阈值来创建掩码
+            gray_frame = cv2.cvtColor(rotated_frame, cv2.COLOR_BGR2GRAY)
+            _, mask = cv2.threshold(gray_frame, 1, 255, cv2.THRESH_BINARY)
+
+            # 只将非黑色像素叠加到背景帧上
+            background_frame = cv2.bitwise_and(background_frame, background_frame, mask=~mask)
+            rotated_frame = cv2.bitwise_and(rotated_frame, rotated_frame, mask=mask)
+            combined_frame = cv2.add(background_frame, rotated_frame)
+            return combined_frame
         else:
             M = cv2.getRotationMatrix2D((width / 2, height / 2), angle, 1)
             rotated_frame = cv2.warpAffine(frame, M, (width, height))
@@ -203,7 +249,8 @@ class RotaenoStabilizer:
         cap = cv2.VideoCapture(self.cfr_output_path)
         cap.set(cv2.CAP_PROP_POS_FRAMES, frame_jump_unit * group_number)
         proc_frames = 0
-        inter_output_path = os.path.join(os.getcwd(), 'output', "{}.{}".format(group_number, 'mp4'))
+        inter_output_path = os.path.join(os.getcwd(), 'output',
+                                         "{}.{}".format(group_number, f'{self.video_extension.lower()[1:]}'))
 
         frame_size = math.ceil(math.sqrt(int(cap.get(3)) ** 2 + int(cap.get(4)) ** 2))
         if self.square:  # 方形
@@ -257,7 +304,7 @@ class RotaenoStabilizer:
         video_list = [(item, frame_jump_unit) for item in video_list]
         p.starmap(self.process_video, video_list)  # 多进程开始
 
-        intermediate_files = ["{}.{}".format(i, 'mp4') for i in range(self.num_cores)]
+        intermediate_files = ["{}.{}".format(i, f'{self.video_extension.lower()[1:]}') for i in range(self.num_cores)]
         # print(intermediate_files)
 
         with open("output/intermediate_files.txt", "w") as f:
