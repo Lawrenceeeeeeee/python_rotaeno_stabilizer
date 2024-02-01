@@ -9,16 +9,17 @@ def find_all_videos():
     寻找videos目录下的所有视频文件，不区分大小写
     :return: 视频列表
     """
-    dir = os.path.join(os.getcwd(), 'videos')  # 指向videos目录
+    video_dir = os.path.join(os.getcwd(), 'videos')  # 指向videos目录
     videos = []
-    # 包括每种格式的大写和小写版本
-    video_formats = ['*' + ext for ext in RotaenoStabilizer.format_to_fourcc.keys()]
-    video_formats += ['*' + ext.upper() for ext in RotaenoStabilizer.format_to_fourcc.keys()]  # 添加大写格式
+    # 获取所有支持的视频文件扩展名（转换为小写）
+    video_extensions = [ext.lower() for ext in RotaenoStabilizer.format_to_fourcc.keys()]
 
-    for video_format in video_formats:
-        for file_path in glob.glob(os.path.join(dir, video_format)):
-            if os.path.isfile(file_path):
-                relative_path = os.path.relpath(file_path, dir)
+    for file_path in glob.glob(os.path.join(video_dir, '*.*')):
+        if os.path.isfile(file_path):
+            _, ext = os.path.splitext(file_path)
+            # 检查文件扩展名是否在支持的列表中
+            if ext.lower() in video_extensions:
+                relative_path = os.path.relpath(file_path, video_dir)
                 videos.append(relative_path)
 
     return videos
