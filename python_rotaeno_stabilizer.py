@@ -34,7 +34,6 @@ class RotaenoStabilizer:
         '.wmv': 'WMV1',
         '.flv': 'FLV1'
     }
-
     def __init__(self, video, type="v2", square=True):
         self.video_file = video
         self.type = type
@@ -207,7 +206,9 @@ class RotaenoStabilizer:
             判定环内径: (1050**2+888**2)**0.5
                 l = 1.1824324324 * b
                 ((1.1824324324**2+1)**0.5 * height + 7)
-            判定环宽度: 14
+            判定环宽度: 14 (1216宽度下是17)
+            
+            如果录屏的长宽比小于1.7763157895,则将宽度设置成 长度/1.7763157895
             """
             # max_size = max(height, width)
             background_frame = np.zeros((max_size, max_size, 3), dtype='uint8')
@@ -215,7 +216,7 @@ class RotaenoStabilizer:
             # 在背景上绘制圆环
             circle_center = (max_size // 2, max_size // 2)
             circle_radius = ((1.1824324324 ** 2 + 1) ** 0.5 * height + 7) // 2
-            circle_thickness = 15  # 圆环的宽度，比如15px
+            circle_thickness = int(3/328 * height + 241/41)  # 圆环的宽度，比如15px
             cv2.circle(background_frame, circle_center, math.ceil(circle_radius), (255, 255, 255), thickness=circle_thickness)
 
             # 将原始视频帧放置在中间
