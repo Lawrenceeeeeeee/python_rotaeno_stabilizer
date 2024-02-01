@@ -2,7 +2,7 @@
 
 *Read this in [English](README_EN.md)*
 
-![Python Rotaeno Stabilizer](images/stable.png)
+![Python Rotaeno Stabilizer](images/cover.jpg)
 
 [视频演示](https://www.bilibili.com/video/BV1bc411f7fK/?share_source=copy_web&vd_source=9e94008dbf76e399a164028430118348)
 
@@ -72,6 +72,9 @@ python main.py
 ```
 
 3. 在`output`文件夹找渲染完成的视频
+
+效果如下:
+![演示](images/example.gif)
 
 ## 联系作者
 

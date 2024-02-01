@@ -2,7 +2,7 @@
 
 *阅读 [中文版](README.md).*
 
-![Python Rotaeno Stabilizer](images/stable.png)
+![Python Rotaeno Stabilizer](images/cover.jpg)
 
 Check out
 the [video demonstration](https://www.bilibili.com/video/BV1bc411f7fK/?share_source=copy_web&vd_source=9e94008dbf76e399a164028430118348)
@@ -80,3 +80,6 @@ python main.py
 
 3. Once processing is complete, find the rendered videos in the `output` folder.
 
+
+Result as follows:
+![Demo](images/example.gif)

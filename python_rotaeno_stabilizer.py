@@ -204,7 +204,7 @@ class RotaenoStabilizer:
         if self.square:  # 方形渲染
             """
             设手机尺寸为a*b, 长a, 宽b
-            判定环内径: (1050**2+888**2)**0.5
+            判定环内径: (1050**2+888**2)**0.5 1383/888
                 l = 1.1824324324 * b
                 ((1.1824324324**2+1)**0.5 * height + 7)
             判定环宽度: 14 (1216宽度下是17)
@@ -217,8 +217,8 @@ class RotaenoStabilizer:
             # 在背景上绘制圆环
             real_height = height if width / height >= 1.7763157895 else width / 1.7763157895
             circle_center = (max_size // 2, max_size // 2)
-            circle_radius = ((1.1824324324 ** 2 + 1) ** 0.5 * real_height + 7) // 2
-            circle_thickness = int(3 / 328 * real_height + 241 / 41)  # 圆环的宽度，比如15px
+            circle_radius = (1.5574 * real_height) // 2
+            circle_thickness = int(3 / 328 * real_height - 46 / 41)  # 圆环的宽度，比如15px
             cv2.circle(background_frame, circle_center, math.ceil(circle_radius), (255, 255, 255),
                        thickness=circle_thickness)
 
