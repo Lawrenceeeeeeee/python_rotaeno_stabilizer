@@ -39,16 +39,14 @@ class RotaenoStabilizer:
         self.video_file = video
         self.type = type
         self.square = square
-        self.video_dir = video if os.path.isabs(video) else os.path.join(os.getcwd(), 'videos', video).replace(r"\\",
-                                                                                                               '/')  # 判断是否为绝对路径
+        self.video_dir = video if os.path.isabs(video) else os.path.join(os.getcwd(), 'videos', video)  # 判断是否为绝对路径
         self.video_file_name = os.path.basename(video)  # 获取不带路径的文件名
         self.video_name = os.path.splitext(self.video_file_name)[0]  # 获取文件名
         self.video_extension = os.path.splitext(self.video_file_name)[1]  # 获取文件后缀
         self.output_path = os.path.join(os.getcwd(), 'output',
-                                        f'{self.video_name}_stb{self.video_extension}').replace(r"\\", '/')  # 指定输出路径
+                                        f'{self.video_name}_stb{self.video_extension}')  # 指定输出路径
         self.cfr_output_path = os.path.join(os.getcwd(), 'output',
-                                            f'{self.video_name}_cfr{self.video_extension}').replace(r"\\",
-                                                                                                    '/')  # 指定输出路径
+                                            f'{self.video_name}_cfr{self.video_extension}')  # 指定输出路径
         cap = cv2.VideoCapture(self.video_dir)
         self.fps = cap.get(cv2.CAP_PROP_FPS)
 
@@ -59,7 +57,7 @@ class RotaenoStabilizer:
         # self.fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         cap.release()
 
-        self.num_cores = os.cpu_count()
+        self.num_cores = os.cpu_count() if os.cpu_count() < 61 else 61
 
     @timer
     def add_audio_to_video(self, verbose=False):
