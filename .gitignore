@@ -2,3 +2,4 @@ __pycache__/python_rotaeno_stabilizer.cpython-310.pyc
 output/short_with_audio.mp4
 videos/short.mp4
 ffmpeg.exe
+.gitignore
