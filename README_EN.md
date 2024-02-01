@@ -82,4 +82,5 @@ python main.py
 
 
 Result as follows:
+
 ![Demo](images/example.gif)

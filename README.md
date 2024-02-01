@@ -74,6 +74,7 @@ python main.py
 3. 在`output`文件夹找渲染完成的视频
 
 效果如下:
+
 ![演示](images/example.gif)
 
 ## 联系作者
