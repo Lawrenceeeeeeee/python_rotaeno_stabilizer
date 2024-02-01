@@ -34,18 +34,21 @@ class RotaenoStabilizer:
         '.wmv': 'WMV1',
         '.flv': 'FLV1'
     }
+
     def __init__(self, video, type="v2", square=True):
         self.video_file = video
         self.type = type
         self.square = square
-        self.video_dir = video if os.path.isabs(video) else os.path.join(os.getcwd(), 'videos', video)  # 判断是否为绝对路径
+        self.video_dir = video if os.path.isabs(video) else os.path.join(os.getcwd(), 'videos', video).replace(r"\\",
+                                                                                                               '/')  # 判断是否为绝对路径
         self.video_file_name = os.path.basename(video)  # 获取不带路径的文件名
         self.video_name = os.path.splitext(self.video_file_name)[0]  # 获取文件名
         self.video_extension = os.path.splitext(self.video_file_name)[1]  # 获取文件后缀
         self.output_path = os.path.join(os.getcwd(), 'output',
-                                        f'{self.video_name}_stb{self.video_extension}')  # 指定输出路径
+                                        f'{self.video_name}_stb{self.video_extension}').replace(r"\\", '/')  # 指定输出路径
         self.cfr_output_path = os.path.join(os.getcwd(), 'output',
-                                            f'{self.video_name}_cfr{self.video_extension}')  # 指定输出路径
+                                            f'{self.video_name}_cfr{self.video_extension}').replace(r"\\",
+                                                                                                    '/')  # 指定输出路径
         cap = cv2.VideoCapture(self.video_dir)
         self.fps = cap.get(cv2.CAP_PROP_FPS)
 
@@ -216,8 +219,9 @@ class RotaenoStabilizer:
             # 在背景上绘制圆环
             circle_center = (max_size // 2, max_size // 2)
             circle_radius = ((1.1824324324 ** 2 + 1) ** 0.5 * height + 7) // 2
-            circle_thickness = int(3/328 * height + 241/41)  # 圆环的宽度，比如15px
-            cv2.circle(background_frame, circle_center, math.ceil(circle_radius), (255, 255, 255), thickness=circle_thickness)
+            circle_thickness = int(3 / 328 * height + 241 / 41)  # 圆环的宽度，比如15px
+            cv2.circle(background_frame, circle_center, math.ceil(circle_radius), (255, 255, 255),
+                       thickness=circle_thickness)
 
             # 将原始视频帧放置在中间
             expanded_frame = np.zeros((max_size, max_size, 3), dtype='uint8')
