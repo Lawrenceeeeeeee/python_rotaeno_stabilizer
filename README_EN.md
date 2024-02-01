@@ -13,6 +13,12 @@ in live broadcast mode. The goal is to stabilize the video image.
 
 # Update Log
 
+## v1.3
+- Added background circle, optimized visual experience
+- Fixed some bugs when the script runs on Windows
+- Fixed the issue where the background circle could not be properly added to screen recordings with a small width-height ratio.
+- Added support for mov, avi, mkv, wmv, flv formats
+
 ## v1.2
 
 - Added multi-process optimization.
@@ -64,7 +70,7 @@ the [FFmpeg official website](https://ffmpeg.org/download.html).
 0. **Attention!** Before recording, ensure the "Streaming Mode" is activated in Rotaeno settings. Once enabled, the four
    corners of the screen will display color blocks, which indicate the device's rotation angle.
 
-1. Place the video to be processed in the videos directory (currently only supports mp4).
+1. Place the video to be processed in the videos directory (currently supports mp4, mov, avi, mkv, wmv, flv).
 
 2. Start the project:
 

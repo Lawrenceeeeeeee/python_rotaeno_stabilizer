@@ -215,9 +215,10 @@ class RotaenoStabilizer:
             background_frame = np.zeros((max_size, max_size, 3), dtype='uint8')
 
             # 在背景上绘制圆环
+            real_height = height if width / height >= 1.7763157895 else width / 1.7763157895
             circle_center = (max_size // 2, max_size // 2)
-            circle_radius = ((1.1824324324 ** 2 + 1) ** 0.5 * height + 7) // 2
-            circle_thickness = int(3 / 328 * height + 241 / 41)  # 圆环的宽度，比如15px
+            circle_radius = ((1.1824324324 ** 2 + 1) ** 0.5 * real_height + 7) // 2
+            circle_thickness = int(3 / 328 * real_height + 241 / 41)  # 圆环的宽度，比如15px
             cv2.circle(background_frame, circle_center, math.ceil(circle_radius), (255, 255, 255),
                        thickness=circle_thickness)
 
