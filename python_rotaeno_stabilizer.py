@@ -47,6 +47,8 @@ class RotaenoStabilizer:
                                         f'{self.video_name}_stb{self.video_extension}')  # 指定输出路径
         self.cfr_output_path = os.path.join(os.getcwd(), 'output',
                                             f'{self.video_name}_cfr{self.video_extension}')  # 指定输出路径
+        self.refined_video_path = os.path.join(os.getcwd(), 'output',
+                                               f'{self.video_name}_refined{self.video_extension}')
         cap = cv2.VideoCapture(self.video_dir)
         self.fps = cap.get(cv2.CAP_PROP_FPS)
 
@@ -60,21 +62,24 @@ class RotaenoStabilizer:
         self.num_cores = os.cpu_count() if os.cpu_count() < 61 else 61
 
     @timer
-    def add_audio_to_video(self, verbose=False):
+    def add_audio_to_video(self, input_video=None, audio=None, verbose=False):
         """
         将音频添加到视频中。
 
-        :param video_file: 输入的视频文件路径。
-        :param audio_source: 输入的音频来源文件路径。
-        :param output_file: 输出视频文件的路径。
+        :param input_video: 输入的视频文件路径。如果为 None，则使用实例的 output_path 属性。
+        :param audio: 输入的音频来源文件路径。如果为 None，则使用实例的 video_dir 属性。
         :param verbose: 是否显示详细的 ffmpeg 输出，默认为 False。
         :return: None
         """
+        if input_video is None:
+            input_video = self.output_path
+        if audio is None:
+            audio = self.video_dir
         output_file = f'output/{self.video_name}_with_audio{self.video_extension.lower()}'
         command = [
             'ffmpeg',
-            '-i', self.output_path,  # 输入的视频文件
-            '-i', self.video_dir,  # 输入的音频来源文件
+            '-i', input_video,  # 输入的视频文件
+            '-i', audio,  # 输入的音频来源文件
             '-c:v', 'copy',  # 复制视频流
             '-c:a', 'aac',  # 使用 AAC 编码音频
             '-strict', 'experimental',
@@ -111,22 +116,22 @@ class RotaenoStabilizer:
         else:
             subprocess.run(cmd)
 
-    # def get_video_duration(self, video_path):
-    #     """
-    #
-    #     :param video_path: 视频路径
-    #     :return: 时长
-    #     """
-    #     cmd = [
-    #         'ffprobe',
-    #         '-v', 'error',
-    #         '-show_entries', 'format=duration',
-    #         '-of', 'default=noprint_wrappers=1:nokey=1',
-    #         video_path
-    #     ]
-    #
-    #     result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    #     return float(result.stdout)
+    def get_video_duration(self, video_path):
+        """
+
+        :param video_path: 视频路径
+        :return: 时长
+        """
+        cmd = [
+            'ffprobe',
+            '-v', 'error',
+            '-show_entries', 'format=duration',
+            '-of', 'default=noprint_wrappers=1:nokey=1',
+            video_path
+        ]
+
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        return float(result.stdout)
 
     def compute_rotation(self, left_color, right_color, center_color, sample_color):
         """
@@ -183,6 +188,36 @@ class RotaenoStabilizer:
 
         return -rotation_degree
 
+    @timer
+    def improve_video_quality(self, target_bitrate='50M', verbose=False):
+        """
+        使用FFmpeg提高视频的码率以改善画质。
+
+        参数:
+        - target_bitrate: 目标视频码率，例如 '50M' 代表50 Mbps。
+        - verbose: 是否显示详细的 ffmpeg 输出，默认为 False。
+        """
+        # 构建FFmpeg命令
+        command = [
+            'ffmpeg',
+            '-i', self.output_path,  # 输入视频文件
+            '-b:v', target_bitrate,  # 设置视频码率
+            '-c:v', 'libx264',  # 设置视频编码器为libx264
+            '-preset', 'slow',  # 使用slow预设，以提高编码效率，但编码速度较慢
+            self.refined_video_path  # 输出视频文件
+        ]
+
+        # 根据verbose参数设置输出
+        if verbose:
+            subprocess.run(command, check=True)
+        else:
+            # 抑制 stdout 和 stderr 输出
+            with open(os.devnull, 'wb') as devnull:
+                subprocess.run(command, stdout=devnull, stderr=devnull, check=True)
+
+        if verbose:
+            print(f"视频质量改善完成，输出文件已保存至: {self.refined_video_path}")
+
     def process_frame(self, frame):
         height, width, channels = frame.shape
 
@@ -232,16 +267,13 @@ class RotaenoStabilizer:
             M = cv2.getRotationMatrix2D((max_size // 2, max_size // 2), angle, 1)
             rotated_frame = cv2.warpAffine(expanded_frame, M, (max_size, max_size))
 
-            mask = cv2.inRange(rotated_frame, (1, 1, 1), (255, 255, 255))
+            # 创建掩码以识别非黑色像素
+            _, mask = cv2.threshold(cv2.cvtColor(rotated_frame, cv2.COLOR_BGR2GRAY), 1, 255, cv2.THRESH_BINARY)
 
-            # 使用模糊和阈值来创建掩码
-            gray_frame = cv2.cvtColor(rotated_frame, cv2.COLOR_BGR2GRAY)
-            _, mask = cv2.threshold(gray_frame, 1, 255, cv2.THRESH_BINARY)
-
-            # 只将非黑色像素叠加到背景帧上
-            background_frame = cv2.bitwise_and(background_frame, background_frame, mask=~mask)
-            rotated_frame = cv2.bitwise_and(rotated_frame, rotated_frame, mask=mask)
-            combined_frame = cv2.add(background_frame, rotated_frame)
+            # 使用掩码叠加非黑色像素到背景帧
+            background_frame_masked = cv2.bitwise_and(background_frame, background_frame, mask=cv2.bitwise_not(mask))
+            rotated_frame_masked = cv2.bitwise_and(rotated_frame, rotated_frame, mask=mask)
+            combined_frame = cv2.add(background_frame_masked, rotated_frame_masked)
             return combined_frame
         else:
             M = cv2.getRotationMatrix2D((width / 2, height / 2), angle, 1)
@@ -335,6 +367,7 @@ class RotaenoStabilizer:
 
         # 接下来只处理CFR视频
         self.render()
+        # self.improve_video_quality()
         self.add_audio_to_video()
 
         os.remove(self.cfr_output_path)
